@@ -19,11 +19,13 @@ publish_mode: editorial_workflow
 media_folder: "assets/images/uploads"
 public_folder: "/assets/images/uploads"
 
-# Cap 1MB toàn cục (default media library) — phòng tuyến 1. Mỗi widget image lặp lại để chắc chắn.
-media_library:
-  name: default
-  config:
-    max_file_size: 1000000   # 1MB = 1.000.000 byte → Decap báo lỗi & CHẶN, không commit
+# Cap 1MB cho ảnh:
+# KHÔNG cấu hình ở top-level. Decap 3.x bắt schema `media_library` PHẢI có `name`, mà `name`
+# chỉ dành cho external library (Cloudinary…) — `name: default` không tồn tại → lỗi config
+# ("Missing external media library 'default'"), còn bỏ `name` → lỗi "must have required property 'name'".
+# Vì vậy cap 1MB đặt TRỰC TIẾP trên TỪNG widget image bên dưới
+# (`media_library: { config: { max_file_size: 1000000 } }` — schema cho phép ở cấp field),
+# và bước CI "Enforce 1MB image cap" trong deploy.yml là lớp chặn thứ 2.
 
 collections:
   # ---------- Thực đơn (1 file = 1 món) ----------
