@@ -1,0 +1,232 @@
+# ============================================================
+# Decap CMS — The Barrel
+# Editor (C1) repo. Login qua GitHub OAuth proxy (C3 = auth.ciaosoft.vn).
+# ============================================================
+backend:
+  name: github
+  repo: nine-foundry/the-barrel-jekyll   # C1 (private). Bàn giao → chuyển Owner cho Bên A
+  branch: main
+  base_url: https://auth.ciaosoft.vn  # C3 OAuth proxy tự host trên foundry-prod
+  auth_endpoint: auth
+
+# Cho phép chạy Decap local khi dev: `npx decap-server` rồi mở /admin/ ở localhost
+local_backend: true
+
+# Quy trình duyệt bài: nháp → review → publish (tạo branch/PR trong C1, không đụng main tới khi publish)
+publish_mode: editorial_workflow
+
+# Ảnh upload commit thẳng vào git (đúng hợp đồng — "bảo vệ dung lượng GitHub" bằng cap 1MB)
+media_folder: "assets/images/uploads"
+public_folder: "/assets/images/uploads"
+
+# Cap 1MB toàn cục (default media library) — phòng tuyến 1. Mỗi widget image lặp lại để chắc chắn.
+media_library:
+  name: default
+  config:
+    max_file_size: 1000000   # 1MB = 1.000.000 byte → Decap báo lỗi & CHẶN, không commit
+
+collections:
+  # ---------- Thực đơn (1 file = 1 món) ----------
+  - name: "dishes"
+    label: "Thực đơn"
+    label_singular: "Món ăn"
+    folder: "_dishes"
+    create: true
+    slug: "{{fields.id}}"
+    identifier_field: "name_vi"
+    summary: "{{name_vi}} — {{price}} [{{category_label}}]"
+    sortable_fields: ["category_order", "menu_order", "name_vi"]
+    fields:
+      - { label: "Mã (slug)", name: "id", widget: "string", hint: "Không dấu, không khoảng trắng. VD: ribeye-usda" }
+      - label: "Danh mục"
+        name: "category"
+        widget: "select"
+        options:
+          - { label: "Khai vị", value: "starters" }
+          - { label: "Bò", value: "beef" }
+          - { label: "Hải sản", value: "seafood" }
+          - { label: "Thịt khác", value: "otherMeats" }
+          - { label: "Súp & Salad", value: "soupSalad" }
+          - { label: "Tráng miệng", value: "desserts" }
+      - { label: "Nhãn danh mục (hiển thị)", name: "category_label", widget: "string", required: false }
+      - { label: "Thứ tự danh mục", name: "category_order", widget: "number", default: 1, value_type: "int" }
+      - { label: "Tên món (VI)", name: "name_vi", widget: "string" }
+      - { label: "Tên món (EN)", name: "name_en", widget: "string", required: false }
+      - { label: "Tên phụ (VI)", name: "sub_vi", widget: "string", required: false }
+      - { label: "Tên phụ (EN)", name: "sub_en", widget: "string", required: false }
+      - { label: "Mô tả ngắn (VI)", name: "desc_vi", widget: "text" }
+      - { label: "Mô tả ngắn (EN)", name: "desc_en", widget: "text", required: false }
+      - { label: "Giá", name: "price", widget: "string", hint: "VD: 380.000₫" }
+      - { label: "Đơn vị giá phụ (VI)", name: "price_suffix_vi", widget: "string", required: false, hint: "VD: /con" }
+      - { label: "Đơn vị giá phụ (EN)", name: "price_suffix_en", widget: "string", required: false }
+      - label: "Hình ảnh"
+        name: "image"
+        widget: "image"
+        required: false
+        media_library: { config: { max_file_size: 1000000 } }
+      - label: "Nhãn"
+        name: "tags"
+        widget: "select"
+        multiple: true
+        required: false
+        options:
+          - { label: "Signature ★", value: "S" }
+          - { label: "Hợp rượu ⌘", value: "WP" }
+          - { label: "Chay ✿", value: "V" }
+          - { label: "Không gluten ○", value: "GF" }
+      - { label: "Thứ tự trong danh mục", name: "menu_order", widget: "number", default: 100, value_type: "int" }
+      - { label: "Đang phục vụ", name: "available", widget: "boolean", default: true }
+
+  # ---------- Hầm vang (1 file = 1 chai) ----------
+  - name: "wines"
+    label: "Hầm vang"
+    label_singular: "Chai vang"
+    folder: "_wines"
+    create: true
+    slug: "{{fields.id}}"
+    identifier_field: "name"
+    summary: "{{name}} {{vintage}} — {{price_bottle}}"
+    fields:
+      - { label: "Mã (slug)", name: "id", widget: "string" }
+      - { label: "Tên rượu", name: "name", widget: "string" }
+      - { label: "Niên vụ", name: "vintage", widget: "string", required: false }
+      - label: "Quốc gia"
+        name: "country"
+        widget: "select"
+        options:
+          - { label: "Pháp", value: "france" }
+          - { label: "Ý", value: "italy" }
+          - { label: "Argentina", value: "argentina" }
+          - { label: "Chile", value: "chile" }
+          - { label: "Nam Phi", value: "southAfrica" }
+          - { label: "Đức", value: "germany" }
+          - { label: "Ba Lan", value: "poland" }
+      - { label: "Nhãn quốc gia (VI)", name: "country_label_vi", widget: "string", required: false }
+      - { label: "Nhãn quốc gia (EN)", name: "country_label_en", widget: "string", required: false }
+      - { label: "Vùng", name: "region", widget: "string" }
+      - label: "Loại"
+        name: "type"
+        widget: "select"
+        options:
+          - { label: "Đỏ", value: "red" }
+          - { label: "Trắng", value: "white" }
+          - { label: "Champagne", value: "champagne" }
+          - { label: "Vang ngọt", value: "sweet" }
+      - { label: "Giống nho", name: "grapes", widget: "string", required: false }
+      - { label: "Ghi chú (VI)", name: "notes_vi", widget: "text", required: false }
+      - { label: "Ghi chú (EN)", name: "notes_en", widget: "text", required: false }
+      - { label: "Giá ly", name: "price_glass", widget: "string", required: false }
+      - { label: "Giá chai", name: "price_bottle", widget: "string" }
+      - { label: "Gợi ý món (VI)", name: "pairing_vi", widget: "string", required: false }
+      - { label: "Gợi ý món (EN)", name: "pairing_en", widget: "string", required: false }
+      - { label: "Sommelier chọn", name: "sommelier", widget: "boolean", default: false }
+      - label: "Hình ảnh"
+        name: "image"
+        widget: "image"
+        required: false
+        media_library: { config: { max_file_size: 1000000 } }
+      - { label: "Còn hàng", name: "available", widget: "boolean", default: true }
+
+  # ---------- Tin tức / Bài viết ----------
+  - name: "posts"
+    label: "Tin tức / Bài viết"
+    label_singular: "Bài viết"
+    folder: "_posts"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Layout", name: "layout", widget: "hidden", default: "post" }
+      - { label: "Tiêu đề", name: "title", widget: "string" }
+      - { label: "Ngày đăng", name: "date", widget: "datetime" }
+      - label: "Phân loại"
+        name: "category"
+        widget: "select"
+        options: ["Khuyến mãi", "Sự kiện", "Chia sẻ", "Tin tức"]
+      - label: "Ảnh đại diện"
+        name: "thumbnail"
+        widget: "image"
+        required: false
+        media_library: { config: { max_file_size: 1000000 } }
+      - { label: "Mô tả ngắn", name: "excerpt", widget: "text", required: false }
+      - { label: "Nội dung", name: "body", widget: "markdown" }
+
+  # ---------- Thư viện ảnh ----------
+  - name: "gallery"
+    label: "Thư viện ảnh"
+    label_singular: "Ảnh"
+    folder: "_gallery"
+    create: true
+    slug: "{{fields.order}}-{{slug}}"
+    identifier_field: "caption"
+    fields:
+      - label: "Ảnh"
+        name: "image"
+        widget: "image"
+        media_library: { config: { max_file_size: 1000000 } }
+      - { label: "Chú thích", name: "caption", widget: "string", required: false }
+      - label: "Album"
+        name: "album"
+        widget: "select"
+        options: ["Không gian", "Món ăn", "Hầm vang", "Sự kiện"]
+      - { label: "Thứ tự", name: "order", widget: "number", default: 1, value_type: "int" }
+
+  # ---------- Trang chủ (file YAML) ----------
+  - name: "home"
+    label: "Trang chủ"
+    files:
+      - label: "Nội dung trang chủ"
+        name: "home"
+        file: "_data/home.yml"
+        fields:
+          - { label: "Hero — tagline", name: "hero_tagline", widget: "text" }
+          - { label: "Hero — phụ đề", name: "hero_sub", widget: "string" }
+          - label: "Hero — ảnh nền"
+            name: "hero_image"
+            widget: "image"
+            media_library: { config: { max_file_size: 1000000 } }
+          - { label: "Ticker (dải chữ chạy)", name: "ticker", widget: "list", field: { label: "Mục", name: "item", widget: "string" } }
+          - { label: "Đặc sản — tiêu đề", name: "dishes_title", widget: "string" }
+          - { label: "Đặc sản — mô tả", name: "dishes_lede", widget: "text" }
+          - { label: "Đặc sản — danh sách món nổi bật (id)", name: "dishes_signature_ids", widget: "list", field: { label: "Mã món", name: "id", widget: "string" } }
+          - { label: "Set menu — tiêu đề", name: "tasting_title", widget: "string" }
+          - { label: "Set menu — mô tả", name: "tasting_desc", widget: "text" }
+          - { label: "Set menu — giá", name: "tasting_price", widget: "string" }
+          - { label: "Rượu — trích dẫn", name: "wine_quote", widget: "text" }
+          - { label: "Rượu — số nhãn", name: "wine_stat_labels", widget: "string" }
+          - { label: "Rượu — số vùng", name: "wine_stat_regions", widget: "string" }
+          - { label: "Rượu — số ly", name: "wine_stat_byglass", widget: "string" }
+          - { label: "Câu chuyện — tiêu đề", name: "story_title", widget: "string" }
+          - { label: "Câu chuyện — đoạn 1", name: "story_p1", widget: "text" }
+          - { label: "Câu chuyện — đoạn 2", name: "story_p2", widget: "text" }
+          - { label: "Câu chuyện — chữ ký", name: "story_signature", widget: "string" }
+          - { label: "Câu chuyện — vai trò", name: "story_signature_role", widget: "string" }
+          - label: "Câu chuyện — ảnh"
+            name: "story_image"
+            widget: "image"
+            media_library: { config: { max_file_size: 1000000 } }
+
+  # ---------- Cấu hình nhà hàng (file YAML) ----------
+  - name: "settings"
+    label: "Cấu hình"
+    files:
+      - label: "Thông tin nhà hàng"
+        name: "site"
+        file: "_data/site.yml"
+        fields:
+          - { label: "Tên thương hiệu", name: "brand", widget: "string" }
+          - { label: "Năm thành lập", name: "established_year", widget: "string" }
+          - { label: "Hotline (đầy đủ)", name: "phone", widget: "string" }
+          - { label: "Hotline (hiển thị)", name: "phone_display", widget: "string" }
+          - { label: "Email", name: "email", widget: "string" }
+          - { label: "Địa chỉ (VI)", name: "address_vi", widget: "text" }
+          - { label: "Địa chỉ (EN)", name: "address_en", widget: "text" }
+          - { label: "Địa chỉ ngắn", name: "address_short", widget: "string" }
+          - { label: "Giờ mở cửa", name: "hours", widget: "string" }
+          - { label: "Ghi chú giờ (VI)", name: "hours_note_vi", widget: "string" }
+          - { label: "Ghi chú giờ (EN)", name: "hours_note_en", widget: "string" }
+          - { label: "Facebook URL", name: "facebook_url", widget: "string", required: false }
+          - { label: "Instagram URL", name: "instagram_url", widget: "string", required: false }
+          - { label: "Zalo URL", name: "zalo_url", widget: "string", required: false }
+          - { label: "Google Maps query", name: "maps_query", widget: "string", required: false }
+          - { label: "Google Maps embed URL", name: "maps_embed", widget: "string", required: false }
+          - { label: "Endpoint đặt bàn (Apps Script Web App)", name: "reservation_endpoint", widget: "string", required: false }
